@@ -1,0 +1,143 @@
+{% include 'navbar.html' %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PRP - DM (Incentive)</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        /* Add CSS styles for the table container */
+        #table-container {
+            max-height: 400px; /* Adjust the maximum height as needed */
+            overflow-y: auto; /* Add a vertical scrollbar when content overflows */
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Incentive Statement Self-Uploader (DIST)</h1>
+        <form method="POST" enctype="multipart/form-data" action="/upload" id="upload-form">
+            <div class="form-group">
+                <input type="file" name="file" accept=".xlsx, .xls" class="form-control-file" id="file-input">
+            </div>
+            <!-- Display the selected file name (initially "No file chosen") -->
+            <div id="file-name">No file chosen</div>
+            <!-- Clear button to remove the chosen file -->
+            <button type="submit" class="btn btn-primary" id="upload-button">Upload</button>
+            <button type="button" class="btn btn-danger" id="clear-button">Clear</button>
+        </form>
+        {% if worksheet_names %}
+        <h3>Available Worksheets</h3>
+        <form method="POST" id="worksheet-form">
+            <div class="form-group">
+                <label for="worksheet">Choose Worksheet:</label>
+                <select class="form-control" id="worksheet" name="worksheet">
+                    {% for sheet_name in worksheet_names %}
+                    <option value="{{ sheet_name }}">{{ sheet_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <!-- Display the selected file name (after choosing a worksheet) -->
+            <div id="selected-file-name"></div>
+            <!-- Use a single button for both upload and submit -->
+            <button type="button" class="btn btn-primary" id="upload-submit">Upload</button>
+        </form>
+        {% else %}
+        <p>No worksheets available.</p>
+        {% endif %}
+        <hr>
+        <div id="table-container">
+            <!-- Table content will be dynamically added here -->
+        </div>
+        <!-- Error message container -->
+        <div id="error-message" class="alert alert-danger" style="display: none;"></div>
+    </div>
+    <!-- Include Bootstrap JS and jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Function to display an error message
+            function displayError(message) {
+                $("#error-message").text(message).show();
+            }
+
+            // Handle errors during data fetching
+            $("#upload-submit").click(function () {
+                // Check if the button text is "Upload"
+                if ($("#upload-submit").text() === "Upload") {
+                    // Get the selected worksheet
+                    var selectedWorksheet = $("#worksheet").val();
+
+                    // Send a request to the server to fetch the data
+                    $.ajax({
+                        url: "/fetch_data",
+                        method: "POST",
+                        data: {
+                            worksheet: selectedWorksheet,
+                            uploaded_file: "{{ uploaded_file }}"
+                        },
+                        success: function (data) {
+                            // Display the data as a Bootstrap table
+                            $("#table-container").html(data);
+
+                            // Change button text and functionality to "Submit"
+                            $("#upload-submit").text("Submit");
+                            $("#upload-form").off("submit").submit(function (e) {
+                                e.preventDefault(); // Prevent the default form submission
+
+                                // Continue with the form submission
+                                $.ajax({
+                                    url: "/upload",
+                                    type: "POST",
+                                    data: new FormData(this),
+                                    processData: false,
+                                    contentType: false,
+                                    success: function (response) {
+                                        // Handle the response if needed
+                                    },
+                                    error: function (error) {
+                                        console.log(error);
+                                        displayError("An error occurred while uploading the file.");
+                                    }
+                                });
+                            });
+
+                            // Display the uploaded file name
+                            var fileName = $("#file-input").val().split('\\').pop();
+                            $("#file-name").text("Uploaded File: " + fileName);
+
+                            // Display the selected file name
+                            $("#selected-file-name").text("Selected File: " + fileName);
+                        },
+                        error: function (error) {
+                            console.log(error);
+                            displayError("An error occurred while fetching the data.");
+                        }
+                    });
+                } else {
+                    // If the button text is "Submit," continue with form submission
+                    $("#upload-form").submit();
+                }
+            });
+
+            // Display the uploaded file name when a file is selected
+            $("#file-input").change(function () {
+                var fileName = $(this).val().split('\\').pop();
+                $("#file-name").text("Uploaded File: " + fileName);
+                $("#selected-file-name").text("Selected File: " + fileName);
+            });
+
+            // Clear the selected file when the Clear button is clicked
+            $("#clear-button").click(function () {
+                $("#file-input").val(""); // Reset the file input
+                $("#file-name").text("No file chosen"); // Reset the displayed file name
+                $("#worksheet").val(""); // Reset the selected worksheet
+                $("#table-container").html(""); // Clear the displayed table
+                $("#upload-submit").text("Upload"); // Reset the button text
+                $("#selected-file-name").text(""); // Clear the selected file name
+                $("#error-message").hide(); // Hide any error messages
+            });
+        });
+    </script>
+</body>
+</html>
