@@ -1,0 +1,468 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[21]:
+
+
+from IPython.display import display, HTML
+import pandas as pd
+display(HTML("<style>.container { width:100% !important; }</style>"))
+pd.set_option('display.max_columns', None)
+pd.set_option("display.max_rows", None)
+
+
+# In[1]:
+
+
+## database initialization
+import io
+import os
+
+import glob
+import openpyxl
+import pandas as pd
+import sqlalchemy as sa
+
+import ipywidgets as widgets
+from ipywidgets import interactive
+
+from urllib.parse import quote  
+from sqlalchemy.engine import create_engine
+
+
+
+connection_url = sa.engine.URL.create(
+    drivername="mysql+pymysql",
+    username="rbpadmin",
+    password="rbp0rt@l1",
+    host="10.12.215.45",
+    database="prpdb_prod",
+)
+
+engine = create_engine('mysql+pymysql://rbpadmin:%s@10.12.215.45:3306/prpdb_prod' % quote('rbp0rt@l1'))
+#engine = create_engine('mysql+pymysql://rbpadmin:%s@localhost:3306/prpdb_prod' % quote('rbp0rt@l1'))
+#engines = create_engine(connection_url)
+#print(engine)
+
+
+# In[2]:
+
+
+import datetime
+from datetime import date
+from datetime import datetime
+from random import randint, randrange
+
+INFILE=r'\\ambankgroup.ahb.com\GFS\DPM-Performance Management\Historical Data\Incentive Statement\FY2324\final-cut 26th\2309'
+OUTFILE=r'\\ambankgroup.ahb.com\GFS\DPM-Performance Management\Historical Data\Incentive Statement\FY2324\for_audit\2309'
+
+
+#INFILE=r'C:\Users\10038394B\Desktop\WIP\2309\dispute'
+#OUTFILE = r'C:\Users\10038394B\Desktop\OUTFILE'
+
+
+
+def modification_date(filename):
+    t=os.path.getmtime(filename)
+    return datetime.fromtimestamp(t).strftime('%y%m%d')
+
+def update_dropdown(listing):
+    display(f"{listing}")
+    
+
+params={'insx_month': '', #user input
+        'insx_version': '',
+        'insx_cycle': 1,
+        #'insx_bst_code': '',
+        'insx_file_name': '', #user input
+        'insx_file_modification_date': str(datetime.now().strftime("%m/%d/%Y, %H:%M:%S")),
+        'insx_file_worksheet': '', #user input
+        'insx_row_count': '',
+        'insx_timestamp_upload': ''}
+
+params_list=list(params)
+df={}
+
+params['insx_file_modification_date']
+
+
+# In[3]:
+
+
+lst_files=[]
+for f in glob.glob(os.path.join(INFILE, '*.xlsx')):
+    lst_files.append(os.path.basename(f))
+    #print(os.path.basename(f))
+
+#select excel calculator file
+insx_file_name=widgets.Dropdown(options=lst_files, description=os.path.basename(INFILE))
+display(interactive(update_dropdown, listing=insx_file_name))
+
+
+# In[4]:
+
+
+#update params
+for f in glob.glob(os.path.join(INFILE, insx_file_name.value)):
+    print(os.path.basename(f).split('.')[0])
+    
+params['insx_file_name']=str(os.path.basename(f).split('.')[0])   
+params['insx_version']=str(modification_date(f))+"_"+str(randint(100, 999))
+
+params['insx_version']
+
+
+# In[5]:
+
+
+import io
+import msoffcrypto
+import openpyxl
+
+lst_sheet=[]
+decrypted_workbook=io.BytesIO()
+for f in glob.glob(os.path.join(INFILE, insx_file_name.value)):
+    print(os.path.basename(f))
+    try:
+        #print('pwd')
+        with open(f, 'rb') as file:
+            office_file=msoffcrypto.OfficeFile(file)
+            office_file.load_key(password='')
+            office_file.decrypt(decrypted_workbook)
+        
+        workbook=openpyxl.load_workbook(filename=decrypted_workbook)
+        #print(workbook.sheetnames)
+        try:
+            for sheet in workbook.sheetnames:
+                #print(sheet)
+                lst_sheet.append(sheet)
+                df[f'{sheet}']=pd.read_excel(decrypted_workbook, sheet_name=sheet, engine='openpyxl')
+                #df[f'{sheet}']=df[f'{sheet}'].loc[:, ~df[f'{sheet}'].columns.str.contains('^Unnamed', na=False)] 
+        except Exception as b:
+            print(b)
+            pass
+        
+    except Exception as a:
+        #print('no pwd ', a)
+        xl=pd.ExcelFile(f)
+        #print(xl.sheet_names)
+        try:
+            for sheet in xl.sheet_names:
+                #print(sheet)
+                lst_sheet.append(sheet)
+                df[f'{sheet}']=pd.read_excel(xl, sheet_name=sheet,)
+                #df[f'{sheet}']=df[f'{sheet}'].loc[:, ~df[f'{sheet}'].columns.str.contains('^Unnamed', na=False)]
+        except Exception as c:
+            print(c)
+            pass
+
+#file.close()
+
+
+# In[6]:
+
+
+#select excel worksheet
+insx_file_worksheet=widgets.Dropdown(options=lst_sheet, description=os.path.basename(f))
+display(interactive(update_dropdown, listing=insx_file_worksheet))
+
+
+# In[7]:
+
+
+#select statement category
+cat={'Monthly': '1',
+     'Quarterly': 'Q'}
+
+select_cat=widgets.Dropdown(options=cat, description='Category: ')
+display(interactive(update_dropdown, listing=select_cat))
+
+
+# In[8]:
+
+
+#update params
+params['insx_file_worksheet']=str(insx_file_worksheet.value)
+params['insx_cycle']=str(select_cat.value)
+
+df_ws={}
+df_ws=df[params['insx_file_worksheet']]
+#df_ws
+
+
+# In[9]:
+
+
+params
+
+
+# In[10]:
+
+
+#read table insg_statement_config
+sql=f""" SELECT * FROM insg_statement_config WHERE insg_calculation_file_name='{params["insx_file_name"]}' AND insg_cycle= '{params["insx_cycle"]}' """ 
+
+temp=pd.read_sql(sql, engine)
+insg_to_insx=temp.iloc[0].to_dict()
+del insg_to_insx['insg_last_update']
+
+insg_to_insx
+
+
+# In[11]:
+
+
+#set insx_header
+df_ws.columns=df_ws.iloc[int(insg_to_insx['insg_xls_start_row'])]
+df_ws2=df_ws.iloc[int(insg_to_insx['insg_xls_start_row'])+1:].reset_index(drop=True)
+
+
+# In[12]:
+
+
+df_ws2
+
+
+# In[13]:
+
+
+#read table cmth_month
+qtr_sql=f""" SELECT DISTINCT(cmth_quarter) FROM  cmth_month WHERE cmth_financial_year='FY 23/24' """ 
+
+cmth_qtr=pd.read_sql(qtr_sql, engine)
+cmth_qtr['cmth_quarter'].values.tolist()
+
+#select cycle
+insx_cycle=widgets.Dropdown(options=cmth_qtr['cmth_quarter'].values.tolist(), description='Cycle: ', value=None)
+display(interactive(update_dropdown, listing=insx_cycle))
+
+
+# In[14]:
+
+
+#read table cmth_month
+mth_sql=f""" SELECT cmth_sys_code FROM cmth_month WHERE cmth_financial_year='FY 23/24' AND cmth_quarter= '{insx_cycle.value}' """ 
+
+cmth_mth=pd.read_sql(mth_sql, engine)
+cmth_mth['cmth_sys_code'].values.tolist()
+
+#select month
+insx_month=widgets.Dropdown(options=cmth_mth['cmth_sys_code'].values.tolist(), description='Month: ', value=None)
+display(interactive(update_dropdown, listing=insx_month))
+
+
+# In[15]:
+
+
+#update params
+params['insx_cycle']=str(insx_cycle.value)
+params['insx_month']=str(insx_month.value)
+
+
+# In[16]:
+
+
+rename_cols={'insx_month': 'insx_month', 
+             'insx_cycle': 'insx_cycle', 
+             'insx_version': 'insx_version', 
+             #'insx_bst_code': 'insx_bst_code', 
+             'insg_src_file': 'insx_src_file'}
+
+
+#for one dataframe
+df_ws2.rename(columns=rename_cols, inplace=True)
+#rename cols
+for col in rename_cols:
+    #print(col, rename_cols[col])
+    #add new cols if not exist
+    if rename_cols[col] not in df_ws2.columns:
+        df_ws2[rename_cols[col]]=None
+
+        
+#update value in new added columns
+df_ws2['insx_month']=params['insx_month']
+df_ws2['insx_cycle']=insg_to_insx['insg_cycle']
+df_ws2['insx_version']=params['insx_version']
+df_ws2['insx_src_file']=insg_to_insx['insg_src_file']
+
+df_ws2
+
+
+# In[17]:
+
+
+#remove columns with no header
+df_ws3=df_ws2.loc[:, df_ws2.columns.notna()]
+
+#remove non-employee id in columns insx_staff_id
+df_ws4=df_ws3[df_ws3.insx_staff_id.str.contains(r'^100[0-9]{5}$', regex=True, na=False)]
+
+
+# In[18]:
+
+
+#update params
+params['insx_row_count']=str(df_ws4.shape[0])
+
+
+# In[19]:
+
+
+params['insx_row_count']
+
+
+# In[20]:
+
+
+#convert value column to float data type
+convert_lst=['']
+
+for i in range(len(convert_lst)):
+    #print(convert_lst[i])
+    for cols in df_ws4.columns:
+        if convert_lst[i] in cols:
+            df_ws4[cols]=df_ws4[cols].astype(float)
+            
+df_ws4.dtypes
+
+
+# In[ ]:
+
+
+#append to insx table
+try:
+    df_ws4.to_sql(con=engine, name=insg_to_insx['insg_table_src'], if_exists='append', index=False,)
+    print(df_ws4.shape)
+    print(df_ws4.columns)
+    
+except Exception as e:
+    print(e)
+    
+df_ws4.head(5)
+
+
+# In[ ]:
+
+
+#call stored procedure
+qry=f"""CALL {insg_to_insx['insg_sp']}('{params['insx_month']}', '{insg_to_insx['insg_cycle']}', '{params['insx_version']}', '{insg_to_insx['insg_src_file']}') """
+#qry=f"""CALL {insg_to_insx['insg_sp']}('{params['insx_month']}', '{params['insx_cycle']}', '{params['insx_version']}', '{insg_to_insx['insg_src_file']}') """
+print(qry)
+
+
+with engine.begin() as connection:
+    result = connection.execute(qry)
+    affected_rows = result.rowcount
+    print(qry)
+    print(f"{affected_rows} rows inserted & updated\n")
+    
+
+print("summary completed\n")
+
+
+# In[ ]:
+
+
+#get timestamp statement upload to inst
+qry=f""" SELECT DISTINCT(inst_insx_version) FROM inst_statement WHERE inst_month='{params['insx_month']}' AND inst_src_file='{insg_to_insx['insg_src_file']}' """
+CHECK=pd.read_sql(qry, engine)
+
+try:
+    if CHECK['inst_insx_version'][0] == params['insx_version']:
+        #update params
+        params['insx_timestamp_upload']=str(datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
+        print({params['insx_timestamp_upload']})
+    else:
+        params['insx_timestamp_upload']=''
+        
+except Exception as e:
+    print(e)
+
+params['insx_timestamp_upload']
+
+
+# In[ ]:
+
+
+#export to_xlsx
+import glob as glob
+import json
+
+file_name=os.path.join(OUTFILE, f"{params['insx_file_name']}_{params['insx_version']}")
+file_sheet=f"{params['insx_file_worksheet']}"
+
+try:
+    df[params['insx_file_worksheet']].to_excel(file_name+'.xlsx', file_sheet, index=0)    
+    with open(file_name+'.txt', 'w') as to_txt:
+        json.dump({'params': params, 'insg_to_insx': insg_to_insx}, to_txt, indent=2)
+              
+except Exception as e:
+    print(e)
+
+
+# In[ ]:
+
+
+#for checking
+#incentive cost
+sql= f"""SELECT `insx_month`, `insx_version`, `insx_position`  AS `Position`, COUNT(insx_position), SUM(`insx_total_payout`) AS `GRAND TOTAL PAYOUT`, SUM(`insx_total_final_payout`) AS `FINAL PAYOUT`
+FROM {insg_to_insx['insg_table_src']}
+WHERE insx_month='{params['insx_month']}'
+AND insx_version='{params['insx_version']}'
+GROUP BY insx_position"""
+
+inc_cost=pd.read_sql(sql, engine)
+
+
+# In[ ]:
+
+
+#summary
+import pprint
+pp=pprint.PrettyPrinter(indent=2)
+
+pp.pprint(params)
+print()
+pp.pprint(insg_to_insx)
+print()
+inc_cost
+
+
+# In[ ]:
+
+
+def printTable(myDict, colList=None, sep='\uFFFA'):
+   """ Pretty print a list of dictionaries (myDict) as a dynamically sized table.
+   If column names (colList) aren't specified, they will show in random order.
+   sep: row separator. Ex: sep='\n' on Linux. Default: dummy to not split line.
+   Author: Thierry Husson - Use it as you want but don't blame me.
+   """
+   if not colList: colList = list(myDict[0].keys() if myDict else [])
+   myList = [colList] # 1st row = header
+   for item in myDict: myList.append([str(item[col] or '') for col in colList])
+   colSize = [max(map(len,(sep.join(col)).split(sep))) for col in zip(*myList)]
+   formatStr = ' | '.join(["{{:<{}}}".format(i) for i in colSize])
+   line = formatStr.replace(' | ','-+-').format(*['-' * i for i in colSize])
+   item=myList.pop(0); lineDone=False
+   while myList or any(item):
+      if all(not i for i in item):
+         item=myList.pop(0)
+         if line and (sep!='\uFFFA' or not lineDone): print(line); lineDone=True
+      row = [i.split(sep,1) for i in item]
+      print(formatStr.format(*[i[0] for i in row]))
+      item = [i[1] if len(i)>1 else '' for i in row]
+
+
+# In[ ]:
+
+
+sampleDict = [test]
+
+printTable(sampleDict, sep='  ')
+
+
+# In[ ]:
+
+
+
+
