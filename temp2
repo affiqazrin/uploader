@@ -1,0 +1,30 @@
+import datetime
+from datetime import date
+from random import randint, randrange
+
+def modification_date(filename):
+    t=os.path.getmtime(filename)
+    return datetime.datetime.fromtimestamp(t).strftime('%y%m%d')
+
+params = {'date_requested': datetime.datetime.now().strftime("%Y%m%d"),
+          'to_temp_table': 'temp_table_mortgage'}
+params_list=list(params)
+report_append=[]
+
+INFILE = r'C:\Users\10038394B\Desktop\INFILE'
+OUTFILE = r'C:\Users\10038394B\Desktop\OUTFILE'
+
+df={}
+for f in glob.glob(os.path.join(INFILE+'\MORTGAGE', "*.txt")):
+    #print(os.path.basename(f))
+    df[f'{os.path.basename(f)}']= pd.read_csv(f, delimiter="|", encoding='cp1252',  dtype='unicode', low_memory=False)  
+    df[f'{os.path.basename(f)}']['src_file']=str(os.path.basename(f))
+    df[f'{os.path.basename(f)}']['date_requested']=params['date_requested']
+    report_append.append(df[f'{os.path.basename(f)}'])
+
+#df[f'{os.path.basename(f)}']
+
+report_final=pd.concat(report_append)
+#report_append['Month']=params[params_list[0]]
+
+#report_final.head(5)
