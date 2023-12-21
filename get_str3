@@ -1,0 +1,17 @@
+def get_distinct_values_as_string(column):
+    """
+    Get distinct values from a specified column in a DataFrame and return them as a string.
+
+    Parameters:
+    - column (pd.Series): The column for which distinct values are required.
+
+    Returns:
+    - str: A string containing distinct values separated by commas.
+    """
+    # Get distinct values from the specified column
+    distinct_values = column.unique()
+
+    # Convert the distinct values to a comma-separated string
+    distinct_values_string = ', '.join(map(str, distinct_values))
+
+    return distinct_values_string
