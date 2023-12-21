@@ -1,17 +1,44 @@
-def get_distinct_values_as_string(column):
+import pandas as pd
+
+def convert_to_month_year_format_and_get_distinct(column):
     """
-    Get distinct values from a specified column in a DataFrame and return them as a string.
+    Convert a datetime column into a new column with 'mmyyyy' format and return distinct values as a string.
 
     Parameters:
-    - column (pd.Series): The column for which distinct values are required.
+    - column (pd.Series): The datetime column to be converted.
 
     Returns:
-    - str: A string containing distinct values separated by commas.
+    - str: A string containing distinct values in 'mmyyyy' format.
     """
-    # Get distinct values from the specified column
-    distinct_values = column.unique()
+    try:
+        # Convert the datetime column to a pandas datetime object
+        datetime_series = pd.to_datetime(column)
 
-    # Convert the distinct values to a comma-separated string
-    distinct_values_string = ', '.join(map(str, distinct_values))
+        # Extract month and year and create a new column with 'mmyyyy' format
+        month_year_format = datetime_series.dt.strftime('%m%Y')
 
-    return distinct_values_string
+        # Get distinct values from the new column
+        distinct_values = month_year_format.unique()
+
+        # Convert the distinct values to a comma-separated string
+        distinct_values_string = ', '.join(map(str, distinct_values))
+
+        return distinct_values_string
+
+    except Exception as e:
+        # Handle the exception (e.g., print an error message or log it)
+        print(f"Error: {e}")
+        return None
+
+# Example DataFrame creation
+data = {'date': ['2023-01-01', '2023-02-15', 'invalid_date', '2023-04-10']}
+df = pd.DataFrame(data)
+
+# Call the method with the 'date' column
+result = convert_to_month_year_format_and_get_distinct(df['date'])
+
+# Print or use the result as needed
+if result is not None:
+    print(result)
+else:
+    print("An error occurred. Please check your input data.")
