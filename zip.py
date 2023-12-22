@@ -1,13 +1,32 @@
-try:
-    xl = pd.ExcelFile(exported_file_path)
-    sheet_names = [sheet for sheet in xl.sheet_names]
-    #uncomment to view list of worksheets
-    #print(list(sheet_names))
-    print(os.path.basename(f))
-    print()            
-except Exception as a:
-    print("File cannot open with error: ", a)
+import os
+import pandas as pd
 
+def read_excel_file(file_path):
+    try:
+        xl = pd.ExcelFile(file_path)
+        sheet_names = xl.sheet_names
+        dataframes = {}
 
-    
-        File cannot open with error:  expected <class 'datetime.datetime'>
+        for sheet_name in sheet_names:
+            df = xl.parse(sheet_name)
+            dataframes[sheet_name] = df
+
+        return dataframes
+
+    except pd.errors.ParserError as pe:
+        print(f"Error parsing Excel file '{file_path}': {pe}")
+        return None
+
+    except Exception as e:
+        print(f"An unexpected error occurred while reading '{file_path}': {e}")
+        return None
+
+# Example usage:
+file_path = exported_file_path  # Replace with your actual file path
+sheet_dataframes = read_excel_file(file_path)
+
+if sheet_dataframes:
+    for sheet_name, df in sheet_dataframes.items():
+        print(f"Sheet Name: {sheet_name}")
+        print(df)
+        print()
