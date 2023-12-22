@@ -9,6 +9,12 @@ def read_excel_file(file_path):
 
         for sheet_name in sheet_names:
             df = xl.parse(sheet_name)
+
+            # Handle datetime conversion for each sheet
+            for column in df.columns:
+                if pd.api.types.is_datetime64_any_dtype(df[column]):
+                    df[column] = pd.to_datetime(df[column], errors='coerce')
+
             dataframes[sheet_name] = df
 
         return dataframes
