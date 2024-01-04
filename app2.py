@@ -1,3 +1,7 @@
+from flask import Flask, request, render_template, redirect, url_for, session, flash
+
+# ... (your existing code)
+
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_file():
     # Clear cache, memory, and session when re-uploading new files
@@ -13,12 +17,14 @@ def upload_file():
 
     if request.method == 'POST':
         if 'file' not in request.files:
-            return "No file part"
+            flash("No file part", 'error')
+            return redirect(url_for('index'))
 
         file = request.files['file']
         print(file)
         if file.filename == '':
-            return "No selected file"
+            flash("No selected file", 'error')
+            return redirect(url_for('index'))
 
         if file:
             filename = secure_filename(file.filename)
