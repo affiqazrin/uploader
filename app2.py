@@ -1,5 +1,3 @@
-from flask import Flask, request, render_template, redirect, url_for, session, flash
-
 # ... (your existing code)
 
 @app.route('/upload', methods=['GET', 'POST'])
@@ -35,11 +33,14 @@ def upload_file():
                 print(lst_sheet)
                 session['f'] = f
 
+                # Update worksheet_names with the new list
+                worksheet_names = lst_sheet
+
             except Exception as e:
                 flash(f"An error occurred while reading the file: {str(e)}", 'error')
                 return redirect(url_for('index'))
 
-            return render_template('upload_single.html', worksheet_names=lst_sheet, uploaded_file=decrypted_workbook,
+            return render_template('upload_single.html', worksheet_names=worksheet_names, uploaded_file=decrypted_workbook,
                                    categories=CATEGORIES, months=MONTHS)
 
-    return render_template('upload_single.html', worksheet_names=lst_sheet, uploaded_file=None, categories=CATEGORIES, months=MONTHS)
+    return render_template('upload_single.html', worksheet_names=worksheet_names, uploaded_file=None, categories=CATEGORIES, months=MONTHS)
