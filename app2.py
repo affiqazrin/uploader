@@ -1,46 +1,31 @@
-@app.before_request
-def before_request():
-    # Reset global variables before each request
-    g.decrypted_workbook = io.BytesIO()
-    g.data = {}
-    g.sql_query = None
-
-# ... (your existing code)
+from flask import make_response
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_file():
-    # Clear cache, memory, and session when re-uploading new files
-    session.clear()
+    # ... (existing code)
 
-    df = {}
-    lst_sheet = []
-    worksheet_names = None
+    if file:
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
 
-    if request.method == 'POST':
-        if 'file' not in request.files:
-            flash("No file part", 'error')
-            return redirect(url_for('index'))
+        try:
+            df, lst_sheet, f = processor.read_insx_file(filepath, decrypted_workbook)
+            print(lst_sheet)
+            session['f'] = f
 
-        file = request.files['file']
-        print(file)
-        if file.filename == '':
-            flash("No selected file", 'error')
-            return redirect(url_for('index'))
+            # Clear browser cache and cookies
+            response = make_response(render_template('upload_single.html', worksheet_names=lst_sheet,
+                                                     uploaded_file=decrypted_workbook,
+                                                     categories=CATEGORIES, months=MONTHS))
+            response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Set-Cookie'] = 'name=value; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT'
 
-        if file:
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
-            try:
-                df, lst_sheet, f = processor.read_insx_file(filepath, g.decrypted_workbook)
-                print(lst_sheet)
-                session['f'] = f
+            return response
 
-            except Exception as e:
-                flash(f"An error occurred while reading the file: {str(e)}", 'error')
-                return redirect(url_for('index'))
+        except Exception as e:
+            return f"An error occurred while reading the file: {str(e)}"
 
-            return render_template('upload_single.html', worksheet_names=lst_sheet, uploaded_file=g.decrypted_workbook,
-                                   categories=CATEGORIES, months=MONTHS)
-
-    return render_template('upload_single.html', worksheet_names=lst_sheet, uploaded_file=None, categories=CATEGORIES, months=MONTHS)
+    return render_template('upload_single.html', worksheet_names=lst_sheet, uploaded_file=None,
+                           categories=CATEGORIES, months=MONTHS)
