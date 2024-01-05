@@ -28,3 +28,24 @@ Try using .loc[row_indexer,col_indexer] = value instead
 See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
   df_filtered.loc[:, col] = df_filtered[col].astype(str)
 Error converting column RP_SME_FRX to float: could not convert string to float: ''
+
+
+
+# Rename columns
+for col in self.params_cols:
+    if self.params_cols[col] not in df_filtered.columns:
+        df_filtered.loc[:, self.params_cols[col]] = None
+
+# Convert value column to float data type
+convert_lst = ['RP', 'rp', 'RM', 'rm', 'CC', 'cc', 'tgt', 'ach', 'act', 'rate', 'payout',
+               'ye_rate', 'amt', 'amount', 'deduct', 'rem1', 'rem2', 'rem3', 'rem4', 'total',
+               'rm', 'ret', 'oth_clw', 'cf_clw']
+
+for col in df_filtered.columns:
+    for convert_item in convert_lst:
+        if convert_item in col:
+            try:
+                df_filtered.loc[:, col] = df_filtered.loc[:, col].astype(float)
+            except Exception as e:
+                df_filtered.loc[:, col] = df_filtered.loc[:, col].astype(str)
+                print(f'Error converting column {col} to float: {e}')
