@@ -34,13 +34,11 @@ def process_data():
             return "Data not found", 404
 
         #data={}
-        data=pd.read_excel(decrypted_workbook, session.get('worksheet_name'), engine='openpyxl')
+        data=pd.read_excel(decrypted_workbook, session.get('worksheet_name'), engine='openpyxl').copy()
         print(data.head(10))
         
         insg_to_insx=processor.read_insx_config(session.get('f'), session.get('selected_category'))        
         processed_data=processor.process_data(data, insg_to_insx, session.get('worksheet'), session.get('insx_cycle'), session.get('selected_month'))        
-        #print(processed_data.head())
-        
         html_table=processed_data.to_html(classes="table table-striped")    
         return html_table
 
