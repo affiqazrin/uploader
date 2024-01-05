@@ -111,7 +111,7 @@ class StatementProcessor:
         - df: DataFrame after the column conversion
         """
         #gc.collect()
-        df=df.reset_index(drop=True).copy()
+        df=df.copy().reset_index(drop=True)
         #df=copy.deepcopy()
         
         for col in df.columns:
@@ -134,18 +134,19 @@ class StatementProcessor:
         # Transform data
         df.columns=df.iloc[header_row]
         df_cleaned=df.iloc[header_row+1:].reset_index(drop=True)
-        print(df_cleaned)
+        #print(df_cleaned)
         
         # Process insx table
         df_cleaned=df_cleaned.loc[:, df_cleaned.columns.notna()]
         df_cleaned=df_cleaned.dropna(axis=1, how='all')  # Drop columns with all NaN values
         df_filtered=df_cleaned[df_cleaned.insx_staff_id.str.contains(r'^100[0-9]{5}$', regex=True, na=False)]             
         df_filtered.rename(columns=self.params_cols, inplace=True)
-        df_filtered=df_filtered.replace({np.nan: '', None: ''}, inplace=True)
+        #df_filtered.df_filtered.replace({np.nan: '', None: ''}, inplace=True)
 
         df_filtered=df_filtered.copy()
         
         # Rename columns
+        #df_filtered.rename(columns=self.params_cols, inplace=True)
         for col in self.params_cols:
             #print(col, params_cols[col])
             # Add new columns if not exist
@@ -157,7 +158,7 @@ class StatementProcessor:
                        'ye_rate', 'amt', 'amount', 'deduct', 'rem1', 'rem2', 'rem3', 'rem4', 'total',
                        'rm', 'ret', 'oth_clw', 'cf_clw']
                        
-        self.convert_columns_to_float(df_filtered, convert_lst)
+        df_filtered=self.convert_columns_to_float(df_filtered, convert_lst)
                         
         self.params_cols={
             'insx_cycle': cycle,
