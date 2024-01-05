@@ -6,3 +6,7 @@ See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stab
   df_filtered[cols]=df_filtered[cols].astype(float)
 
 127.0.0.1 - - [05/Jan/2024 09:16:33] "POST /process_data HTTP/1.1" 500 -
+
+    except Exception as e:
+        print(f"Error in process_data: {str(e)}")
+        return f"Error in process_data: {str(e)}", 500
