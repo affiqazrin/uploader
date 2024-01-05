@@ -49,3 +49,8 @@ for col in df_filtered.columns:
             except Exception as e:
                 df_filtered.loc[:, col] = df_filtered.loc[:, col].astype(str)
                 print(f'Error converting column {col} to float: {e}')
+
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  df_filtered=df_filtered.replace({np.nan: '', None: ''}, inplace=True)
+127.0.0.1 - - [05/Jan/2024 15:26:40] "POST /process_data HTTP/1.1" 500 -
