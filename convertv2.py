@@ -17,7 +17,7 @@ def convert_columns_to_float(self, convert_lst):
             if convert_item in col:
                 try:
                     # Convert None values to 0
-                    df.loc[df[col].isna(), col] = 0
+                    df[col] = df[col].fillna(0).astype(float)
                     
                     # Check if the conversion to float is successful
                     converted_values = pd.to_numeric(df.loc[:, col], errors='coerce')
