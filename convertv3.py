@@ -1,6 +1,6 @@
-def convert_columns_to_float(df, convert_lst):
+def convert_columns_to_float_by_substrings(df, convert_lst):
     """
-    Convert specified columns in the DataFrame to float data type.
+    Convert specified columns in the DataFrame to float data type based on substrings.
     If not possible, retain the original data type. Convert None values to 0.
 
     Parameters:
@@ -16,8 +16,9 @@ def convert_columns_to_float(df, convert_lst):
         for convert_item in convert_lst:
             if convert_item in col:
                 try:
-                    df[col] = df[col].apply(lambda x: 0 if x is None else x).astype(float)
-                except ValueError as e:
+                    # Convert None values to 0
+                    df[col] = df[col].fillna(0).astype(float)
+                except Exception as e:
                     print(f'Error converting column {col} to float: {e}. Retaining original data type.')
 
     return df
