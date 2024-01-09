@@ -58,3 +58,10 @@ See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stab
 
 
 AttributeError: 'NoneType' object has no attribute 'loc'
+
+C:\Users\10038394B\Desktop\project5v2\package\StatementProcessor.py:177: SettingWithCopyWarning:
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  df_filtered['insx_src_file']=str(insg_to_insx['insg_src_file'])
