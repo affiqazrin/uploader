@@ -1,10 +1,23 @@
-#convert value column to float data type
-convert_lst=['RP', 'rp' 'RM', 'rm', 'CC', 'cc', 'tgt', 'ach', 'act', 'rate', 'payout', 'ye_rate', 'amt', 'amount', 'deduct', 'rem1','rem2', 'rem3', 'rem4', 'total', 'rm', 'ret', 'oth_clw', 'cf_clw']
+def convert_columns_to_float(df, convert_lst):
+    """
+    Convert specified columns in the DataFrame to float data type.
+    If not possible, retain the original data type. Convert None values to 0.
 
-for i in range(len(convert_lst)):
-    #print(convert_lst[i])
-    for cols in df_ws4.columns:
-        if convert_lst[i] in cols:
-            df_ws4[cols]=df_ws4[cols].astype(float)
-            
-df_ws4.dtypes
+    Parameters:
+    - df: DataFrame
+    - convert_lst: List of substrings to identify columns for conversion
+
+    Returns:
+    - df: DataFrame after the column conversion
+    """
+    df = df.copy().reset_index(drop=True)
+
+    for col in df.columns:
+        for convert_item in convert_lst:
+            if convert_item in col:
+                try:
+                    df[col] = df[col].apply(lambda x: 0 if x is None else x).astype(float)
+                except ValueError as e:
+                    print(f'Error converting column {col} to float: {e}. Retaining original data type.')
+
+    return df
