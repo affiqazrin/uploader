@@ -48,3 +48,16 @@ db=SQLAlchemy(app)
             app.run(debug=True, host='0.0.0.0', port=8888)
         except Exception as e:
             app.logger.error(f"Error connecting to the database: {e}")
+
+
+
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+
+app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = 'INC_STATEMENT'
+app.config.from_object('config.ProductionConfig')  # Change to 'config.ProductionConfig' for production
+
+# Initialize the SQLAlchemy extension
+db = SQLAlchemy(app)
+
