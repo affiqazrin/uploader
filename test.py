@@ -80,3 +80,25 @@ if __name__ == '__main__':
     # Now you can use the initialized app and db objects as needed
     app.run(debug=True, host='0.0.0.0', port=8888)
 
+def ldap_authenticate(username, password):
+    try:
+        server = Server(app.config['LDAP_SERVER'], get_info=ALL)
+        conn = Connection(server, user=app.config['LDAP_BIND_USER'], password=app.config['LDAP_BIND_PASSWORD'], auto_bind=True)
+
+        search_filter = f'(&(objectClass=person)(uid={username}))'
+        conn.search(app.config['LDAP_SEARCH_BASE'], search_filter, attributes=['cn', 'uid'])
+
+        if len(conn.entries) == 1:
+            user_dn = conn.entries[0].entry_dn
+            try:
+                conn = Connection(server, user=user_dn, password=password, auto_bind=True)
+                return True
+            except LDAPExceptionError as e:
+                # Handle the specific LDAPExceptionError for invalid password
+                if 'Invalid credentials' in str(e):
+                    return False
+    except LDAPExceptionError:
+        # Handle the general LDAPExceptionError for socket-related errors
+        return False
+
+    return False
