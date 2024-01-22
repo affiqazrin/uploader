@@ -26,10 +26,10 @@ class TestConfig(Config):
 
 # LDAP configuration
 class LDAPConfig:
-    LDAP_SERVER = os.environ.get('LDAP_SERVER') or 'ldap://ambankgroup.ahb.com'
-    LDAP_BIND_USER = os.environ.get('LDAP_BIND_USER') or 'CN=svsrbportal,OU=Service Account,DC=AMBANKGROUP,DC=AHB,DC=COM'
-    LDAP_BIND_PASSWORD = os.environ.get('LDAP_BIND_PASSWORD') or 'Merah12#'
-    LDAP_SEARCH_BASE = os.environ.get('LDAP_SEARCH_BASE') or 'OU=AMB,OU=Employee,DC=ambankgroup,DC=ahb,DC=com'
+    LDAP_SERVER = os.environ.get('LDAP_SERVER') or '
+    LDAP_BIND_USER = os.environ.get('LDAP_BIND_USER') or '
+    LDAP_BIND_PASSWORD = os.environ.get('LDAP_BIND_PASSWORD') or
+    LDAP_SEARCH_BASE = os.environ.get('LDAP_SEARCH_BASE') or 
 
 # Define a dictionary to easily select the appropriate configuration
 config = {
