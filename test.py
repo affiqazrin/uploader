@@ -61,3 +61,7 @@ app.config.from_object('config.ProductionConfig')  # Change to 'config.Productio
 # Initialize the SQLAlchemy extension
 db = SQLAlchemy(app)
 
+
+  File "C:\Users\10038394B\Desktop\project5v2_new\app_test.py", line 327, in <module>
+    app_config = config['default']  # Use the default configuration for now, you can choose the appropriate one
+NameError: name 'config' is not defined
