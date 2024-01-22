@@ -62,6 +62,21 @@ app.config.from_object('config.ProductionConfig')  # Change to 'config.Productio
 db = SQLAlchemy(app)
 
 
-  File "C:\Users\10038394B\Desktop\project5v2_new\app_test.py", line 327, in <module>
-    app_config = config['default']  # Use the default configuration for now, you can choose the appropriate one
-NameError: name 'config' is not defined
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+
+# Assuming your config dictionary is defined in a module named config
+from config import config
+
+app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = 'INC_STATEMENT'
+app_config = config['default']  # Use the default configuration for now, you can choose the appropriate one
+app.config.from_object(app_config)
+
+# Initialize the SQLAlchemy extension
+db = SQLAlchemy(app)
+
+if __name__ == '__main__':
+    # Now you can use the initialized app and db objects as needed
+    app.run(debug=True, host='0.0.0.0', port=8888)
+
