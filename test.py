@@ -10,3 +10,23 @@ if __name__ == '__main__':
             app.logger.error(f"Error connecting to the database: {e}")
 
     app.run(debug=True,host='0.0.0.0', port=8888)
+
+
+
+
+if __name__ == '__main__':
+    app_config = config['default']  # Use the default configuration for now, you can choose the appropriate one
+    app.config.from_object(app_config)
+
+    with app.app_context():
+        # Use the configured secret key
+        app.secret_key = app.config['SECRET_KEY']
+
+        # Check if the database is connected successfully
+        try:
+            initialize_database()
+            print("Database connected successfully!")
+            # Run the application only if the database connection is successful
+            app.run(debug=True, host='0.0.0.0', port=8888)
+        except Exception as e:
+            app.logger.error(f"Error connecting to the database: {e}")
