@@ -22,6 +22,24 @@ if __name__ == '__main__':
         # Use the configured secret key
         app.secret_key = app.config['SECRET_KEY']
 
+
+
+app = Flask(__name__)
+
+
+
+app=Flask(__name__)
+app.config['UPLOAD_FOLDER']='INC_STATEMENT'
+app.config.from_object('config.ProductionConfig')  # Change to 'config.ProductionConfig' for production
+#app.config['_external_route_base'] = True
+
+
+# Load configuration from config.py
+#app.config.from_pyfile('config.py')
+
+# Initialize the SQLAlchemy extension
+db=SQLAlchemy(app)
+
         # Check if the database is connected successfully
         try:
             initialize_database()
