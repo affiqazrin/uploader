@@ -102,3 +102,46 @@ def ldap_authenticate(username, password):
         return False
 
     return False
+
+
+
+
+
+
+from ldap3 import Server, Connection, ALL, LDAPExceptionError
+
+# Define LDAP attribute constants
+LDAP_CN_ATTRIBUTE = 'cn'
+LDAP_UID_ATTRIBUTE = 'uid'
+
+def ldap_authenticate(username, password):
+    try:
+        # Establish connection with LDAP server using service account
+        server = Server(app.config['LDAP_SERVER'], get_info=ALL)
+        service_account_conn = Connection(server, user=app.config['LDAP_BIND_USER'], password=app.config['LDAP_BIND_PASSWORD'], auto_bind=True)
+
+        # Search for the user's entry
+        search_filter = f'(&(objectClass=person)(uid={username}))'
+        service_account_conn.search(app.config['LDAP_SEARCH_BASE'], search_filter, attributes=[LDAP_CN_ATTRIBUTE, LDAP_UID_ATTRIBUTE])
+
+        if len(service_account_conn.entries) == 1:
+            user_dn = service_account_conn.entries[0].entry_dn
+
+            # Attempt user authentication
+            try:
+                user_conn = Connection(server, user=user_dn, password=password, auto_bind=True)
+                return True
+            except LDAPExceptionError as e:
+                # Handle the specific LDAPExceptionError for invalid password
+                if 'Invalid credentials' in str(e):
+                    return False
+        else:
+            # Handle the case where user entry is not found
+            return False
+
+    except LDAPExceptionError as e:
+        # Log the specific LDAPExceptionError details
+        app.logger.error(f"LDAP authentication error: {e}")
+        return False
+
+    return False
