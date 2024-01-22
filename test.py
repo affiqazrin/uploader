@@ -153,3 +153,20 @@ def ldap_authenticate(username, password):
         return False
 
     return False
+
+
+
+def create_db_engine():
+    try:
+        engine=create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
+        print(engine)
+        return engine
+
+    except Exception as e:
+        print(f"Error creating database engine: {str(e)}")
+        return None
+  
+processor=StatementProcessor(create_db_engine())
+decrypted_workbook=io.BytesIO()
+data={}
+sql_query=None
