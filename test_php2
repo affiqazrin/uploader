@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pass Variable to Batch File</title>
+</head>
+<body>
+
+<h2>Enter a variable to pass to the batch file:</h2>
+
+<form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
+    <label for="variable">Variable:</label>
+    <input type="text" id="variable" name="variable">
+    <input type="submit" name="submit" value="Submit">
+</form>
+
+<?php
+// Check if the form is submitted
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit'])) {
+    // Get the variable from the form
+    $variable = $_POST['variable'];
+
+    // Execute the batch file with the variable as argument
+    $output = shell_exec('your_batch_file.bat ' . escapeshellarg($variable));
+
+    // Output the result (if any)
+    echo "<pre>$output</pre>";
+}
+?>
+
+</body>
+</html>
